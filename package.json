@@ -1,0 +1,27 @@
+{
+  "name": "yolchi-transport",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
+    "start": "node server.mjs",
+    "test": "node --test src/*.test.js",
+    "test:server": "node --test server.test.js",
+    "check": "npm test && npm run build && npm run test:server",
+    "format": "prettier --write src package.json server.mjs index.html"
+  },
+  "dependencies": {
+    "@material/material-color-utilities": "^0.4.0",
+    "@material/web": "^2.5.0",
+    "motion": "^12.35.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "vite": "^7.3.1"
+  }
+}
