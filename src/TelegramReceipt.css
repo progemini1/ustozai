@@ -1,0 +1,71 @@
+.telegram-receipt {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  text-align: left;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 23px;
+  padding: 23px;
+  margin: 30px 0 0;
+}
+.telegram-mark {
+  display: grid;
+  place-items: center;
+  width: 47px;
+  height: 50px;
+  background: #e2f1ff;
+  color: #218ac6;
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+.telegram-copy {
+  flex: 1;
+  min-width: 0;
+}
+.telegram-copy h2 {
+  font-size: 19px;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+  margin-bottom: 7px;
+}
+.telegram-copy p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.telegram-copy .telegram-error {
+  color: var(--md-sys-color-error);
+  margin-top: 8px;
+}
+.telegram-receipt md-outlined-button {
+  font-size: 11px;
+}
+.telegram-receipt:has(.telegram-error) {
+  border-color: var(--md-sys-color-error);
+}
+@media (max-width: 760px) {
+  .telegram-receipt {
+    flex-wrap: wrap;
+    padding: 21px;
+    gap: 14px;
+  }
+  .telegram-copy {
+    flex-basis: calc(100% - 65px);
+  }
+  .telegram-copy h2 {
+    font-size: 21px;
+  }
+  .telegram-copy p {
+    font-size: 12px;
+  }
+  .telegram-receipt md-outlined-button {
+    margin-left: 61px;
+    font-size: 12px;
+  }
+}
+@media print {
+  .telegram-receipt {
+    display: none !important;
+  }
+}

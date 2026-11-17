@@ -35,3 +35,7 @@ Ikonkalar `src/icons.jsx` ichidagi SVG yo‘llarida. Runtime tashqi ikonka yoki 
 Shriftlar loyiha bilan birga saqlanadi. Litsenziya matnlari va mualliflik qaydlari joylash nusxasiga ham kiradi.
 
 Bu ro‘yxat bog‘liqliklarning litsenziyasini saqlaydi; foydalanuvchi logosi yoki tashqi dizaynning savdo belgilariga egalik da’vosini bildirmaydi.
+
+## Dashboard tasvirlari
+
+`public/images/dashboard-parcels.webp` va `dashboard-delivery.webp` ushbu loyiha uchun built-in imagegen orqali yaratildi, WebP formatida optimallashtirildi. Kitoblar va qadoqlangan yuklar hamda ko‘k transport va manzil belgilari; landingdagi Antigravity tasvirlari o‘zgartirilmadi.

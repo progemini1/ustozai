@@ -12,6 +12,7 @@ import {
   validReceipt,
   sortTrips,
   dateLabel,
+  scopedReceiptStorage,
 } from "./domain.js";
 const example = {
   id: "ticket-006-test",
@@ -267,4 +268,89 @@ test("101-so‘rov eski tarixni qisqartirmaydi: asl 100 ta saqlanadi va yangi ta
   assert.equal(storage.getItem(STORAGE_KEY), before);
   assert.equal(storage.writes, 0);
   assert.ok(!loadReceipts(storage).items.some((r) => r.id === receipt.id));
+});
+
+test("Mehmon va ikki akkauntning mahalliy so‘rovlari bir-biriga aralashmaydi", () => {
+  const values = new Map([["another.app", "preserve"]]);
+  const storage = {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const guest = scopedReceiptStorage(storage);
+  const first = scopedReceiptStorage(
+    storage,
+    "11111111-1111-4111-8111-111111111111",
+  );
+  const second = scopedReceiptStorage(
+    storage,
+    "22222222-2222-4222-8222-222222222222",
+  );
+  const guestReceipt = another("guest-only"),
+    firstReceipt = another("first-only"),
+    secondReceipt = another("second-only");
+  assert.equal(storeReceipt(guest, guestReceipt).saved, true);
+  assert.deepEqual(loadReceipts(first).items, []);
+  assert.equal(storeReceipt(first, firstReceipt).saved, true);
+  assert.deepEqual(loadReceipts(second).items, []);
+  assert.equal(storeReceipt(second, secondReceipt).saved, true);
+  assert.deepEqual(loadReceipts(guest).items, [guestReceipt]);
+  assert.deepEqual(loadReceipts(first).items, [firstReceipt]);
+  assert.deepEqual(loadReceipts(second).items, [secondReceipt]);
+  assert.deepEqual(
+    loadReceipts(
+      scopedReceiptStorage(storage, "11111111-1111-4111-8111-111111111111"),
+    ).items,
+    [firstReceipt],
+  );
+  assert.equal(values.get("another.app"), "preserve");
+  assert.equal(JSON.parse(values.get(STORAGE_KEY))[0].id, "guest-only");
+});
+
+test("Akkaunt nusxasini tiklash boshqa akkaunt yoki mehmon tarixini o‘zgartirmaydi", () => {
+  const values = new Map(),
+    storage = {
+      getItem: (key) => values.get(key) || null,
+      setItem: (key, value) => values.set(key, value),
+    };
+  const guest = scopedReceiptStorage(storage),
+    first = scopedReceiptStorage(storage, "account-first"),
+    second = scopedReceiptStorage(storage, "account-second");
+  storeReceipt(guest, another("guest"));
+  storeReceipt(second, another("second"));
+  assert.equal(mergeReceiptBackup(first, [another("imported")]).ok, true);
+  assert.deepEqual(
+    loadReceipts(guest).items.map((item) => item.id),
+    ["guest"],
+  );
+  assert.deepEqual(
+    loadReceipts(first).items.map((item) => item.id),
+    ["imported"],
+  );
+  assert.deepEqual(
+    loadReceipts(second).items.map((item) => item.id),
+    ["second"],
+  );
+});
+
+test("Cheklangan storage barcha scope uchun xavfsiz rad etiladi va yolg‘on saqlandi deyilmaydi", () => {
+  const blocked = {
+    getItem() {
+      throw new Error("blocked");
+    },
+    setItem() {
+      throw new Error("blocked");
+    },
+  };
+  for (const backing of [undefined, blocked])
+    for (const owner of [undefined, "first-user", "second-user"]) {
+      const scoped = scopedReceiptStorage(backing, owner);
+      const read = loadReceipts(scoped),
+        write = storeReceipt(scoped, example);
+      assert.equal(read.available, false);
+      assert.deepEqual(read.items, []);
+      assert.equal(write.saved, false);
+      assert.equal(mergeReceiptBackup(scoped, [example]).ok, false);
+      assert.ok(!read.reason.includes("first-user"));
+      assert.ok(!read.reason.includes("second-user"));
+    }
 });

@@ -28,6 +28,8 @@ import {
   loadDraft,
   sortTrips,
   mergeReceiptBackup,
+  scopedReceiptStorage,
+  draftKey,
 } from "./domain.js";
 import { Icon } from "./icons.jsx";
 import Landing from "./Landing.jsx";
@@ -40,8 +42,13 @@ import {
   DepartureList,
 } from "./WorkspaceVisual.jsx";
 import "./workspace.css";
+import "./DashboardMedia.css";
 import GuidePage from "./GuidePage.jsx";
+import TelegramReceipt from "./TelegramReceipt.jsx";
+import AiAssistant from "./AiAssistant.jsx";
 import RequestsPage from "./RequestsPage.jsx";
+import { AuthProvider, useAuth } from "./AuthContext.jsx";
+import AuthPage, { AuthCallback } from "./AuthPage.jsx";
 
 const SPRING = { type: "spring", stiffness: 320, damping: 30 };
 function RouteArt({ trip, large = false }) {
@@ -50,6 +57,18 @@ function RouteArt({ trip, large = false }) {
       className={`route-art art-${trip.color} ${large ? "art-large" : ""}`}
       aria-hidden="true"
     >
+      <img
+        className="route-scene"
+        src={
+          ["peach", "yellow"].includes(trip.color)
+            ? "/images/dashboard-parcels.webp"
+            : "/images/dashboard-delivery.webp"
+        }
+        alt=""
+        width="1200"
+        height="675"
+        loading={large ? "eager" : "lazy"}
+      />
       <div className="art-grid" />
       <svg viewBox="0 0 360 170">
         <path
@@ -99,6 +118,7 @@ function AppShell({
   onPalette,
   receiptCount,
 }) {
+  const { user } = useAuth();
   return (
     <div className="app-shell">
       <aside className="app-rail">
@@ -180,9 +200,11 @@ function AppShell({
                   ? "So‘rovlarim"
                   : page === "guide"
                     ? "Yuk qo‘llanmasi"
-                    : page === "receipt"
-                      ? "So‘rov tasdig‘i"
-                      : "So‘rov tayyorlash"}
+                    : page === "account"
+                      ? "Hisobim"
+                      : page === "receipt"
+                        ? "So‘rov tasdig‘i"
+                        : "So‘rov tayyorlash"}
             </span>
           </div>
           <div className="topbar-actions">
@@ -200,9 +222,23 @@ function AppShell({
             <button onClick={onHelp} aria-label="Yordam">
               <Icon name="help" />
             </button>
-            <span className="profile-avatar" title="Shaxsiy brauzer">
-              Y
-            </span>
+            <Link
+              to={user ? "/hisob" : "/kirish"}
+              className="account-link"
+              aria-label={user ? "Hisobim" : "Google orqali kirish"}
+            >
+              {user ? (
+                <span className="profile-avatar">
+                  {(user.user_metadata?.full_name ||
+                    user.email ||
+                    "Y")[0].toUpperCase()}
+                </span>
+              ) : (
+                <span>
+                  Google bilan kirish <Icon name="out" size={15} />
+                </span>
+              )}
+            </Link>
           </div>
         </header>
         <main id="main" className="app-main">
@@ -238,14 +274,12 @@ function Routes({ url, onDetail }) {
   const days = [...new Set(TRIPS.map((t) => t.date))];
   const chooseDestination = (name) => {
     update("hudud", name === "Barchasi" ? "" : name);
-    document
-      .getElementById("route-results")
-      ?.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-        block: "start",
-      });
+    document.getElementById("route-results")?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+      block: "start",
+    });
   };
   return (
     <>
@@ -454,6 +488,14 @@ function Routes({ url, onDetail }) {
         <aside className="route-aside">
           <DepartureList trips={trips} onDetail={onDetail} />
           <div className="packing-side-card">
+            <img
+              className="packing-side-image"
+              src="/images/dashboard-parcels.webp"
+              alt="Mustahkam qadoqlangan kitoblar va kichik yuklar"
+              width="1200"
+              height="675"
+              loading="lazy"
+            />
             <div className="aside-title">
               <span className="aside-icon">
                 <Icon name="box" size={25} />
@@ -498,7 +540,31 @@ function Routes({ url, onDetail }) {
   );
 }
 function RequestForm({ trip, onSubmit }) {
-  const [draft] = useState(() => loadDraft(trip.id));
+  const { user } = useAuth();
+  useEffect(() => {
+    const apply = (event) => {
+      if (event.detail?.tripId !== trip.id) return;
+      if (typeof event.detail.name === "string")
+        setName(event.detail.name.slice(0, 80));
+      if (typeof event.detail.cargo === "string")
+        setCargo(event.detail.cargo.slice(0, 500));
+      setErrors({});
+    };
+    window.addEventListener("yolchi:fill-request", apply);
+    return () => window.removeEventListener("yolchi:fill-request", apply);
+  }, [trip.id]);
+  useEffect(() => {
+    const apply = (event) => {
+      if (typeof event.detail === "string") {
+        setCargo(event.detail.slice(0, 500));
+        setErrors((old) => ({ ...old, cargo: undefined }));
+        requestAnimationFrame(() => cargoRef.current?.focus());
+      }
+    };
+    window.addEventListener("yolchi:use-cargo", apply);
+    return () => window.removeEventListener("yolchi:use-cargo", apply);
+  }, []);
+  const [draft] = useState(() => loadDraft(trip.id, user?.id));
   const [name, setName] = useState(draft.name),
     [cargo, setCargo] = useState(draft.cargo),
     [errors, setErrors] = useState({}),
@@ -512,7 +578,7 @@ function RequestForm({ trip, onSubmit }) {
         return;
       }
       storage.setItem(
-        `yolchi.draft.${trip.id}`,
+        draftKey(trip.id, user?.id),
         JSON.stringify({ name, cargo }),
       );
       setDraftSaved(true);
@@ -523,7 +589,7 @@ function RequestForm({ trip, onSubmit }) {
   const submitLock = useRef(false);
   const nameRef = useRef(null),
     cargoRef = useRef(null);
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (busy || submitLock.current) return;
     const next = validateRequest(name, cargo);
@@ -535,9 +601,15 @@ function RequestForm({ trip, onSubmit }) {
     submitLock.current = true;
     setBusy(true);
     try {
-      onSubmit({ tripId: trip.id, name: name.trim(), cargo: cargo.trim() });
+      await onSubmit({
+        tripId: trip.id,
+        name: name.trim(),
+        cargo: cargo.trim(),
+      });
       try {
-        browserStorage("sessionStorage")?.removeItem(`yolchi.draft.${trip.id}`);
+        browserStorage("sessionStorage")?.removeItem(
+          draftKey(trip.id, user?.id),
+        );
       } catch {}
     } catch (error) {
       submitLock.current = false;
@@ -750,7 +822,10 @@ function RequestForm({ trip, onSubmit }) {
     </>
   );
 }
-function Receipt({ receipt, saved, notify }) {
+function Receipt({ receipt, saved, cloudSaved, notify }) {
+  const { user, saveReceipt } = useAuth();
+  const [saving, setSaving] = useState(false),
+    [cloudSaveError, setCloudSaveError] = useState("");
   const trip = tripById(receipt.tripId);
   return (
     <>
@@ -761,9 +836,11 @@ function Receipt({ receipt, saved, notify }) {
         <p className="app-eyebrow">MA’LUMOTLARINGIZ TAYYOR</p>
         <h1>So‘rovingiz tayyorlandi.</h1>
         <p className="receipt-subtitle">
-          {saved
-            ? "Tasdiq shu brauzerda saqlandi. Uni “So‘rovlarim”dan qayta ochishingiz mumkin."
-            : "Tasdiq joriy oynada tayyor. Nusxasini yuklab yoki chop etib oling."}
+          {cloudSaved
+            ? "Tasdiq Supabase’dagi hisobingizga saqlandi. Boshqa qurilmada Google orqali kirib qayta ochishingiz mumkin."
+            : saved
+              ? "Tasdiq shu brauzerda saqlandi. Google orqali kirib hisobingizga ham saqlashingiz mumkin."
+              : "Tasdiq joriy oynada tayyor. Nusxasini yuklab yoki chop etib oling."}
         </p>
         <section className="receipt-ticket">
           <div className="ticket-header">
@@ -825,6 +902,35 @@ function Receipt({ receipt, saved, notify }) {
         <p className="receipt-disclaimer">
           Tasdiq haqiqiy bron yoki haydovchiga xabar yuborilganini bildirmaydi.
         </p>
+        <TelegramReceipt receipt={receipt} />
+        {!cloudSaved && (
+          <div className="receipt-cloud-action">
+            {user ? (
+              <Button
+                variant="tonal"
+                disabled={saving}
+                icon="shield"
+                onClick={async () => {
+                  setSaving(true);
+                  const result = await saveReceipt(receipt);
+                  setSaving(false);
+                  if (result.ok) {
+                    setCloudSaveError("");
+                    notify("So‘rov hisobingizga saqlandi.");
+                  } else setCloudSaveError(result.error);
+                }}
+              >
+                {saving ? "Hisobga saqlanmoqda…" : "Hisobga saqlash"}
+              </Button>
+            ) : (
+              <Link to="/kirish" className="inline-action">
+                Google orqali kirib hisobingizga saqlang{" "}
+                <Icon name="out" size={16} />
+              </Link>
+            )}
+            {cloudSaveError && <p role="alert">{cloudSaveError}</p>}
+          </div>
+        )}
         <div className="receipt-next">
           <Link to="/sorovlar">
             So‘rovlarim <Icon name="arrow" size={17} />
@@ -888,16 +994,42 @@ function Modal({ title, onClose, children }) {
   );
 }
 function App() {
+  const {
+    user,
+    session,
+    cloudReceipts,
+    cloudLoading,
+    cloudError,
+    saveReceipt,
+    importReceipts,
+  } = useAuth();
+  const ownerRef = useRef(user?.id || "guest");
+  ownerRef.current = user?.id || "guest";
+  const localStore = () => scopedReceiptStorage(browserStorage(), user?.id);
   const [url, setUrl] = useState(getLocation),
-    [receipts, setReceipts] = useState(
-      () => loadReceipts(browserStorage()).items,
-    ),
+    [receipts, setReceipts] = useState(() => loadReceipts(localStore()).items),
     [storageWarning, setStorageWarning] = useState(
-      () => loadReceipts(browserStorage()).reason || "",
+      () => loadReceipts(localStore()).reason || "",
     ),
     [unsaved, setUnsaved] = useState([]),
     [modal, setModal] = useState(null),
     [toast, setToast] = useState("");
+  const [receiptOwner, setReceiptOwner] = useState(user?.id || "guest");
+  const currentLocal = receiptOwner === (user?.id || "guest") ? receipts : [];
+  const visibleReceipts = user
+    ? [
+        ...new Map(
+          [...currentLocal, ...cloudReceipts].map((r) => [r.id, r]),
+        ).values(),
+      ].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    : currentLocal;
+  useEffect(() => {
+    const state = loadReceipts(localStore());
+    setReceipts(state.items);
+    setReceiptOwner(user?.id || "guest");
+    setUnsaved([]);
+    setStorageWarning(state.reason || "");
+  }, [user?.id]);
   const [dark, setDark] = useState(() => {
       try {
         return localStorage.getItem("yolchi.theme") === "dark";
@@ -938,7 +1070,7 @@ function App() {
     };
     const filtered = () => setUrl(getLocation());
     const sync = () => {
-      const state = loadReceipts(browserStorage());
+      const state = loadReceipts(localStore());
       if (state.available)
         setReceipts((old) => [
           ...old.filter((r) => unsaved.includes(r.id)),
@@ -955,9 +1087,9 @@ function App() {
       window.removeEventListener("yolchi:filter", filtered);
       window.removeEventListener("storage", sync);
     };
-  }, [unsaved]);
+  }, [unsaved, user?.id]);
   useEffect(() => {
-    document.title = `${url === "/" ? "Kichik yuk, katta imkoniyat" : url.startsWith("/qatnovlar") ? "Qatnovlar" : url.startsWith("/sorovlar") ? "So‘rovlarim" : url.startsWith("/qollanma") ? "Yuk qo‘llanmasi" : url.startsWith("/tasdiq") ? "So‘rov tasdig‘i" : "So‘rov tayyorlash"} — Yo‘lchi`;
+    document.title = `${url === "/" ? "Kichik yuk, katta imkoniyat" : url.startsWith("/qatnovlar") ? "Qatnovlar" : url.startsWith("/sorovlar") ? "So‘rovlarim" : url.startsWith("/qollanma") ? "Yuk qo‘llanmasi" : url.startsWith("/tasdiq") ? "So‘rov tasdig‘i" : ["/hisob", "/kirish", "/auth/callback"].includes(url.split("?")[0]) ? "Hisobim" : "So‘rov tayyorlash"} — Yo‘lchi`;
   }, [url.split("?")[0]]);
   useEffect(() => {
     if (!toast) return;
@@ -965,7 +1097,7 @@ function App() {
     return () => clearTimeout(t);
   }, [toast]);
   const submit = useCallback(
-    (data) => {
+    async (data) => {
       const id = crypto.randomUUID(),
         receipt = {
           ...data,
@@ -973,7 +1105,11 @@ function App() {
           number: `YL-${id.slice(0, 6).toUpperCase()}`,
           createdAt: new Date().toISOString(),
         };
-      const result = storeReceipt(browserStorage(), receipt, receipts);
+      const submitOwner = user?.id || "guest";
+      const cloudResult = user ? await saveReceipt(receipt) : null;
+      if (ownerRef.current !== submitOwner)
+        throw new Error("Hisob almashdi. So‘rov yangi hisobga qo‘shilmadi.");
+      const result = storeReceipt(localStore(), receipt, receipts);
       setReceipts((old) => [
         receipt,
         ...(result.saved ? result.items.filter((r) => r.id !== id) : old),
@@ -986,11 +1122,116 @@ function App() {
         setUnsaved((old) => [...old, id]);
         setStorageWarning(result.reason);
       }
+      if (cloudResult && !cloudResult.ok) setStorageWarning(cloudResult.error);
       go(`/tasdiq/${id}`);
     },
-    [receipts],
+    [receipts, user?.id, saveReceipt],
   );
   const path = url.split("?")[0];
+  const currentReceipt = path.startsWith("/tasdiq/")
+    ? visibleReceipts.find((r) => r.id === path.split("/")[2])
+    : undefined;
+  const onAgentAction = async (action) => {
+    if (action.type === "send_telegram") {
+      if (!currentReceipt)
+        return { ok: false, error: "Avval so‘rov tasdig‘ini oching." };
+      if (!session)
+        return {
+          ok: false,
+          error: "Telegramga yuborish uchun Google orqali kiring.",
+        };
+      if (action.tripId && action.tripId !== currentReceipt.tripId)
+        return {
+          ok: false,
+          error: "Avval tanlangan qatnovning tasdig‘ini oching.",
+        };
+      const saved = await saveReceipt(currentReceipt);
+      if (!saved.ok) return saved;
+      try {
+        const response = await fetch("/api/telegram/receipt", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token || ""}`,
+          },
+          body: JSON.stringify({ receipt: currentReceipt }),
+          signal: AbortSignal.timeout(14000),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.sent)
+          return { ok: false, error: data.error || "Telegramga yuborilmadi." };
+        window.dispatchEvent(
+          new CustomEvent("yolchi:telegram-sent", {
+            detail: currentReceipt.id,
+          }),
+        );
+        return {
+          ok: true,
+          label: "Tasdiq ulangan Telegram chatiga yetkazildi.",
+        };
+      } catch {
+        return {
+          ok: false,
+          error: "Telegram bilan aloqa uzildi. Qayta urinib ko‘ring.",
+        };
+      }
+    }
+    const trip = tripById(action.tripId);
+    if (!trip) return { ok: false, error: "Qatnov topilmadi." };
+    if (action.type === "create_request") {
+      const errors = validateRequest(action.name, action.cargo);
+      if (Object.keys(errors).length)
+        return { ok: false, error: errors.name || errors.cargo };
+      await submit({
+        tripId: trip.id,
+        name: action.name.trim(),
+        cargo: action.cargo.trim(),
+      });
+      return {
+        ok: true,
+        label: "So‘rov tasdig‘i yaratildi. Haqiqiy transport bron qilinmagan.",
+      };
+    }
+    if (!["open_request", "set_cargo", "fill_request"].includes(action.type))
+      return { ok: false, error: "Bu amal qo‘llanmaydi." };
+    if (action.type !== "open_request") {
+      const draft = loadDraft(trip.id, user?.id),
+        data = {
+          tripId: trip.id,
+          name:
+            typeof action.name === "string"
+              ? action.name.slice(0, 80)
+              : draft.name,
+          cargo:
+            typeof action.cargo === "string"
+              ? action.cargo.slice(0, 500)
+              : draft.cargo,
+        };
+      try {
+        browserStorage("sessionStorage")?.setItem(
+          draftKey(trip.id, user?.id),
+          JSON.stringify(data),
+        );
+      } catch {
+        return {
+          ok: false,
+          error: "Shaklni to‘ldirish uchun brauzer xotirasi mavjud emas.",
+        };
+      }
+      if (path === `/sorov/${trip.id}`)
+        window.dispatchEvent(
+          new CustomEvent("yolchi:fill-request", { detail: data }),
+        );
+    }
+    go(`/sorov/${trip.id}`);
+    return {
+      ok: true,
+      label:
+        action.type === "open_request"
+          ? `${trip.id} so‘rov shakli ochildi.`
+          : "Qoralama shaklga joylandi. Ma’lumotni tekshirib tasdiqlang.",
+    };
+  };
   let page = "routes",
     content;
   if (path === "/")
@@ -1002,7 +1243,13 @@ function App() {
         <Landing />
       </MotionConfig>
     );
-  if (path === "/qatnovlar")
+  if (path === "/kirish" || path === "/hisob") {
+    page = "account";
+    content = <AuthPage />;
+  } else if (path === "/auth/callback") {
+    page = "account";
+    content = <AuthCallback />;
+  } else if (path === "/qatnovlar")
     content = (
       <Routes url={url} onDetail={(trip) => setModal({ type: "trip", trip })} />
     );
@@ -1010,14 +1257,28 @@ function App() {
     page = "requests";
     content = (
       <RequestsPage
-        receipts={receipts}
+        key={user?.id || "guest"}
+        cloud={!!user}
+        receipts={visibleReceipts}
         notify={setToast}
-        onImport={(items) => {
-          const result = mergeReceiptBackup(browserStorage(), items, receipts);
+        onImport={async (items) => {
+          const importOwner = user?.id || "guest";
+          const cloud = user ? await importReceipts(items) : null;
+          if (cloud && !cloud.ok) return cloud;
+          if (ownerRef.current !== importOwner)
+            return {
+              ok: false,
+              error: "Hisob almashdi. Nusxa joriy hisobga qo‘shilmadi.",
+            };
+          const result = mergeReceiptBackup(localStore(), items, receipts);
           if (result.ok) {
             setReceipts(result.items);
             setUnsaved([]);
             setStorageWarning("");
+          }
+          if (!result.ok && cloud?.ok) {
+            setToast("Nusxa hisobingizga saqlandi. Mahalliy kesh mavjud emas.");
+            return cloud;
           }
           return result;
         }}
@@ -1030,15 +1291,20 @@ function App() {
     page = "request";
     const trip = tripById(path.split("/")[2]);
     content = trip ? (
-      <RequestForm key={trip.id} trip={trip} onSubmit={submit} />
+      <RequestForm
+        key={`${trip.id}:${user?.id || "guest"}`}
+        trip={trip}
+        onSubmit={submit}
+      />
     ) : null;
   } else if (path.startsWith("/tasdiq/")) {
     page = "receipt";
-    const receipt = receipts.find((r) => r.id === path.split("/")[2]);
+    const receipt = visibleReceipts.find((r) => r.id === path.split("/")[2]);
     content = receipt ? (
       <Receipt
         receipt={receipt}
         saved={!unsaved.includes(receipt.id)}
+        cloudSaved={cloudReceipts.some((r) => r.id === receipt.id)}
         notify={setToast}
       />
     ) : (
@@ -1072,8 +1338,20 @@ function App() {
         onPalette={() => setModal({ type: "palette" })}
         onTheme={() => setDark((v) => !v)}
         dark={dark}
-        receiptCount={receipts.length}
+        receiptCount={visibleReceipts.length}
       >
+        {user && cloudError && (
+          <div className="storage-warning" role="status">
+            <Icon name="info" size={19} />
+            {cloudError}
+            <Link to="/hisob">Hisobni tekshirish</Link>
+          </div>
+        )}
+        {user && cloudLoading && (
+          <p className="cloud-loading" role="status">
+            Hisobdagi so‘rovlar yuklanmoqda…
+          </p>
+        )}
         {storageWarning && (
           <div className="storage-warning" role="status">
             <Icon name="info" size={19} />
@@ -1100,6 +1378,21 @@ function App() {
           </motion.div>
         </AnimatePresence>
       </AppShell>
+      <AiAssistant
+        key={user?.id || "guest"}
+        ownerId={user?.id || "guest"}
+        currentReceipt={currentReceipt}
+        onAgentAction={onAgentAction}
+        tripId={path.startsWith("/sorov/") ? path.split("/")[2] : undefined}
+        onUseCargo={
+          path.startsWith("/sorov/")
+            ? (text) =>
+                window.dispatchEvent(
+                  new CustomEvent("yolchi:use-cargo", { detail: text }),
+                )
+            : undefined
+        }
+      />
       {modal && (
         <Modal
           title={
@@ -1200,4 +1493,8 @@ function App() {
     </MotionConfig>
   );
 }
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>,
+);

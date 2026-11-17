@@ -2,6 +2,20 @@
 
 Bu hujjat bajarilishi kerak bo‘lgan joylash topshirig‘i. Jonli deploy mavjud yoki muvaffaqiyatli deb tasdiqlamaydi. Kod GitHubga yuborilgach, ayni commitni deploy qiling.
 
+## Yangilangan integratsiya — birinchi o‘qing
+
+Google Auth va Supabase bazasi qo‘shilgan. `SUPABASE-SETUP.md` bo‘yicha `supabase/migrations/202611170001_requests.sql` ni loyiha SQL Editor’ida bajaring. Render muhitiga `SUPABASE_URL=https://nyfulxqqclkkiccnpyeo.supabase.co` va shu loyihaning **publishable/anon** kalitini `SUPABASE_ANON_KEY` sifatida kiriting. `service_role` kerak emas va public config’ga berilmaydi.
+
+Mahalliy `loyiha/.env` da foydalanuvchi bergan AI va Telegram kalitlari bor, Git’dan chiqarilgan. Renderga aynan server environment sifatida qo‘ying. Maxfiy qiymatlarni hisobot yoki repo fayliga yozmang. `SUPABASE_ANON_KEY` ni mahalliy `.env` ga ham qo‘shing, shunda localhost’da haqiqiy login ishlaydi. Config kiritilgach backendni qayta ishga tushiring.
+
+Codex Render yaratish formasini `yolchi-uz`, Singapore, **Free**, `main`, `npm ci && npm run build`, `npm start`, `/health` bilan tayyorladi va 6 ta AI/Telegram qiymati + `NODE_VERSION=22.16.0` ni kiritdi. **Deploy tugmasi bosilgani tasdiqlanmagan.** Yangi xizmatni takror yaratishdan avval shu formani tekshiring.
+
+Public Git Repository URL bilan oddiy service auto-deploy qilmaydi. Foydalanuvchi keyingi pushlar avtomatik chiqishini so‘radi: Git Provider orqali faqat `progemini1/ustozai` reposini ulash va **On Commit** rejimini tanlash kerak. Yangi GitHub app ruxsati chiqsa foydalanuvchi shu ruxsatni tasdiqlaydi; aks holda GitHub Actions → maxfiy Render deploy hook orqali avtomatlashtirish mumkin. Deploy hook maxfiy, repo yoki hisobotga yozilmaydi.
+
+Google Cloud OAuth callback avvalgidek `https://nyfulxqqclkkiccnpyeo.supabase.co/auth/v1/callback`. Supabase Site URL — Render bergan haqiqiy origin. Redirect allowlist — shu origin `/auth/callback` va localhost 3000/5173 callbacklari. Bu ikki callbackni aralashtirmang.
+
+AI `/api/ai`: haqiqiy native function calling, 6 ta vosita, bitta agent, Groq/Gemini va 4 kalit almashinuvi. Standartlar `openai/gpt-oss-120b`, `gemini-3.5-flash-lite`; ikkala provider haqiqiy javob bilan tekshirildi. Telegram `/api/telegram/receipt`: Google sessiyasi tekshiriladi va tasdiq Supabase’dan egasi bo‘yicha olinadi; keyin haqiqiy chatga yuboriladi. JWT bo‘lmasa 401; guest brauzer tasdig‘i o‘zicha Telegramga yuborilmaydi.
+
 ## Manba va loyiha
 
 - GitHub: [progemini1/ustozai](https://github.com/progemini1/ustozai).
@@ -25,7 +39,7 @@ Ushbu loyiha uchun **Node Web Service** yarating. `render.yaml` shu sozlamalarni
 | Environment       | `NODE_VERSION=22.16.0`                  |
 | Instance          | Free, agar dashboardda mavjud bo‘lsa    |
 
-`PORT` ni kodda qotirmang; Render bergan qiymat o‘qiladi va server `0.0.0.0` ga ulanadi. Ushbu versiyaga Supabase, Google OAuth yoki boshqa API kaliti kerak emas. Hech qanday secretni frontend, Git yoki hisobotga qo‘shmang.
+`PORT` ni kodda qotirmang; Render bergan qiymat o‘qiladi va server `0.0.0.0` ga ulanadi. Supabase/Google, AI va Telegram uchun yuqoridagi environment sozlamalari kerak. Hech qanday secretni frontend, Git yoki hisobotga qo‘shmang.
 
 Deploy tugaguncha build log va xizmat holatini kuzating. Xato chiqsa oxirgi mazmunli logni oling, manbasini aniqlang. `Live` holati hamda sahifaning ochilishini tekshirmaguncha tayyor deb xabar bermang.
 
@@ -59,4 +73,4 @@ Telefon ko‘rinishi:
 Qolgan xato yoki cheklov:
 ```
 
-`https://ustozai.onrender.com` oldingi infratuzilma hisobotidagi taxminiy allowlist nomi edi; uni xizmatning haqiqiy URL’i deb qabul qilmang. Supabase tayyorgarligi bu sinov saytining ishlashiga bog‘liq emas. Faqat keyin haqiqiy auth integratsiyasi so‘ralsa, Site URL va redirect ro‘yxatini amaldagi domen bilan alohida moslash kerak bo‘ladi.
+`https://ustozai.onrender.com` oldingi infratuzilma hisobotidagi taxminiy allowlist nomi edi; uni xizmatning haqiqiy URL’i deb qabul qilmang. Google va Supabase ulanishi uchun Site URL va redirect ro‘yxatini haqiqiy domen bilan moslang. SQL va kalit bo‘lmasa mehmon rejimi ishlaydi, bulut hamda Telegram tayyor deb hisoblanmaydi.

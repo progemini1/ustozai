@@ -57,10 +57,12 @@ export function browserStorage(kind = "localStorage") {
     return undefined;
   }
 }
-export function loadDraft(tripId) {
+export const draftKey = (tripId, userId) =>
+  `yolchi.draft.${userId || "guest"}.${tripId}`;
+export function loadDraft(tripId, userId) {
   try {
     const value = JSON.parse(
-      browserStorage("sessionStorage")?.getItem(`yolchi.draft.${tripId}`) ||
+      browserStorage("sessionStorage")?.getItem(draftKey(tripId, userId)) ||
         "null",
     );
     return {
@@ -93,6 +95,19 @@ export function validReceipt(value) {
   );
 }
 export const STORAGE_KEY = "yolchi.requests.v1";
+export function scopedReceiptStorage(storage, userId) {
+  const scopedKey = userId ? `${STORAGE_KEY}.user.${userId}` : STORAGE_KEY;
+  return {
+    getItem: (key) => {
+      if (!storage) throw new Error("Storage unavailable");
+      return storage.getItem(key === STORAGE_KEY ? scopedKey : key);
+    },
+    setItem: (key, value) => {
+      if (!storage) throw new Error("Storage unavailable");
+      storage.setItem(key === STORAGE_KEY ? scopedKey : key, value);
+    },
+  };
+}
 export function mergeReceiptBackup(storage, incoming, sessionItems = []) {
   if (
     !Array.isArray(incoming) ||

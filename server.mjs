@@ -1,8 +1,20 @@
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { resolve, extname, relative, sep } from "node:path";
+import { handleApi } from "./server/api.mjs";
+try {
+  process.loadEnvFile(resolve(".env"));
+} catch (error) {
+  if (error.code !== "ENOENT")
+    console.error(
+      "Mahalliy sozlamalarni o‘qib bo‘lmadi. Server environment qiymatlaridan foydalanadi.",
+    );
+}
 const root = resolve("dist");
 const mime = {
+  ".webp": "image/webp",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -14,6 +26,11 @@ const mime = {
 };
 const server = http.createServer(async (req, res) => {
   try {
+    const apiPath = new URL(req.url, "http://localhost").pathname;
+    if (apiPath.startsWith("/api/")) {
+      await handleApi(req, res, apiPath);
+      return;
+    }
     if (!["GET", "HEAD"].includes(req.method)) {
       res.writeHead(405, { Allow: "GET, HEAD" });
       res.end();
@@ -72,6 +89,8 @@ const server = http.createServer(async (req, res) => {
     res.end("Bad request");
   }
 });
+server.requestTimeout = 15000;
+server.headersTimeout = 15000;
 const port = Number(process.env.PORT || 3000);
 server.listen(port, process.env.PORT ? "0.0.0.0" : "127.0.0.1", () =>
   console.log(`Yo‘lchi: http://127.0.0.1:${port}`),

@@ -10,12 +10,15 @@
     "start": "node server.mjs",
     "test": "node --test src/*.test.js",
     "test:server": "node --test server.test.js",
-    "check": "npm test && npm run build && npm run test:server",
-    "format": "prettier --write src package.json server.mjs index.html"
+    "check": "npm test && npm run test:integrations && npm run build && npm run test:server",
+    "format": "prettier --write src package.json server.mjs index.html",
+    "test:integrations": "node --test server/*.test.mjs",
+    "dev:backend": "node --env-file=.env --watch server-dev.mjs"
   },
   "dependencies": {
     "@material/material-color-utilities": "^0.4.0",
     "@material/web": "^2.5.0",
+    "@supabase/supabase-js": "^2.119.0",
     "motion": "^12.35.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

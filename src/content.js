@@ -7,7 +7,7 @@ export const BRAND = {
   introduction:
     "Kitoblar, sovg‘a yoki kichik buyumlar. Yaqin hududga yuk jo‘natish mos qatnovni topishdan boshlanadi.",
   cta: "Qatnov topish",
-  note: "Sinov xizmati: so‘rov tayyorlanadi, haqiqiy bron yoki haydovchiga xabar yuborilmaydi.",
+  note: "Sinov xizmati: tasdiq tayyorlanadi, haqiqiy transport bron qilinmaydi. Telegram xabari faqat siz yuborish tugmasini bosganda jo‘natiladi.",
 };
 // Bilet 006 ma’lumotlari: manzillar va sana-vaqtlar aynan saqlangan.
 export const TRIPS = [

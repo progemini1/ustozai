@@ -132,7 +132,12 @@ function TicketArtwork() {
   );
 }
 
-export default function RequestsPage({ receipts, onImport, notify }) {
+export default function RequestsPage({
+  receipts,
+  onImport,
+  notify,
+  cloud = false,
+}) {
   const [query, setQuery] = useState("");
   const [destination, setDestination] = useState("Barchasi");
   const [sort, setSort] = useState("recent");
@@ -517,11 +522,16 @@ export default function RequestsPage({ receipts, onImport, notify }) {
           <Icon name="shield" size={23} />
         </span>
         <div>
-          <h3>Ma’lumotlaringiz shu brauzerda.</h3>
+          <h3>
+            {cloud
+              ? "Hisobingiz va mahalliy nusxa."
+              : "Ma’lumotlaringiz shu brauzerda."}
+          </h3>
           <p>
-            Qurilma almashtirishdan oldin JSON nusxasini saqlang. Uni “Nusxadan
-            tiklash” orqali qayta ochish mumkin. Tasdiqlar haqiqiy bron yoki
-            yetkazib berish holati hisoblanmaydi.
+            {cloud
+              ? "Bulutga saqlangan so‘rovlar Google hisobingiz bilan qayta ochiladi. Saqlanmagan mahalliy nusxalar uchun hisob sahifasidan qayta saqlash yoki JSON nusxa olish mumkin."
+              : "Qurilma almashtirishdan oldin JSON nusxasini saqlang. Uni “Nusxadan tiklash” orqali qayta ochish mumkin."}{" "}
+            Tasdiqlar haqiqiy bron yoki yetkazib berish holati hisoblanmaydi.
           </p>
         </div>
         <Link to="/qollanma">
