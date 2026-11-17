@@ -1,4 +1,12 @@
 /* Inner workspace only. Landing styles are maintained separately. */
+.workspace-jump {
+  margin-top: 18px;
+  font-size: 12px;
+  gap: 12px;
+}
+.app-shell #route-results {
+  scroll-margin-top: 60px;
+}
 .app-shell .live-request-preview {
   margin: 0 26px 26px;
   padding: 22px;

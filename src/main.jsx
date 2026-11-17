@@ -236,6 +236,17 @@ function Routes({ url, onDetail }) {
     sort,
   );
   const days = [...new Set(TRIPS.map((t) => t.date))];
+  const chooseDestination = (name) => {
+    update("hudud", name === "Barchasi" ? "" : name);
+    document
+      .getElementById("route-results")
+      ?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+        block: "start",
+      });
+  };
   return (
     <>
       <div className="page-heading">
@@ -263,6 +274,9 @@ function Routes({ url, onDetail }) {
             Kitob, sovg‘a yoki ish buyumlari. Mos qatnovni tanlab, yukingiz
             uchun keyingi yo‘lni belgilang.
           </p>
+          <a href="#route-results" className="inline-action workspace-jump">
+            Qatnovlarni ko‘rish <Icon name="arrow" size={17} />
+          </a>
           <div className="workspace-metrics">
             <div>
               <strong>{TRIPS.length.toString().padStart(2, "0")}</strong>
@@ -278,14 +292,11 @@ function Routes({ url, onDetail }) {
             </div>
           </div>
         </div>
-        <NetworkScene
-          destination={destination}
-          onSelect={(name) => update("hudud", name === "Barchasi" ? "" : name)}
-        />
+        <NetworkScene destination={destination} onSelect={chooseDestination} />
       </section>
       <DestinationOverview
         destination={destination}
-        onSelect={(name) => update("hudud", name === "Barchasi" ? "" : name)}
+        onSelect={chooseDestination}
       />
       <div className="schedule-toolbar">
         <div className="schedule-days" role="group" aria-label="Jo‘nash sanasi">
@@ -405,7 +416,7 @@ function Routes({ url, onDetail }) {
                         <Icon name="info" size={19} />
                       </button>
                     </div>
-                    <h3>
+                    <h3 aria-label={`${trip.from} → ${trip.to}`}>
                       {trip.from}
                       <Icon name="arrow" size={19} />
                       <span>{trip.to}</span>
