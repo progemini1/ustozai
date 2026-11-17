@@ -34,6 +34,8 @@ function publicKey(value) {
 }
 /** Public client configuration only; service-role and secret keys are rejected. */
 export function getSupabaseConfig(env = process.env) {
+  // Public browser configuration, protected by Auth + RLS. Runtime env overrides it.
+  if(env===process.env)env={SUPABASE_URL:'https://nyfulxqqclkkiccnpyeo.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_jHkCuSxOiYuo1M5L8u65Mg_NMqNL8EX',...env};
   let url = "";
   try {
     const parsed = new URL(env.SUPABASE_URL || "");
