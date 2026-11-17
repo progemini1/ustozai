@@ -80,13 +80,13 @@ function advanceParticle(p, target, pointer, waves, dt = 1) {
   const steps = Math.max(1, Math.ceil(dt));
   const step = dt / steps;
   for (let j = 0; j < steps; j++) {
-    let ax = (target.x - p.x) * 0.055;
-    let ay = (target.y - p.y) * 0.055;
+    let ax = (target.x - p.x) * 0.056;
+    let ay = (target.y - p.y) * 0.056;
     const dx = p.x - pointer.x;
     const dy = p.y - pointer.y;
     const d = Math.hypot(dx, dy);
-    if (d < 100 && d > 0.01) {
-      const force = (1 - d / 100) * 4.5;
+    if (d < 110 && d > 0.01) {
+      const force = (1 - d / 110) * 5.0;
       ax += (dx / d) * force;
       ay += (dy / d) * force;
     }
@@ -94,9 +94,9 @@ function advanceParticle(p, target, pointer, waves, dt = 1) {
       const x = p.x - wave.x;
       const y = p.y - wave.y;
       const r = Math.hypot(x, y);
-      if (r > 0.01 && Math.abs(r - wave.radius) < 25) {
-        ax += (x / r) * 8.5;
-        ay += (y / r) * 8.5;
+      if (r > 0.01 && Math.abs(r - wave.radius) < 26) {
+        ax += (x / r) * 9.5;
+        ay += (y / r) * 9.5;
       }
     }
     const damping = Math.pow(0.82, step);
@@ -110,20 +110,20 @@ function advanceParticle(p, target, pointer, waves, dt = 1) {
 function shapeTarget(kind, i, count, time, box, pointer = { nx: 0, ny: 0 }) {
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h / 2;
-  const r = Math.min(box.w, box.h) * 0.29;
+  const r = Math.min(box.w, box.h) * 0.31;
 
   if (kind === 'sphere' || kind === 'ring') {
     const ring = kind === 'ring' ? Math.floor(count * 0.22) : 0;
     if (i < ring) {
       const a = (i / ring) * Math.PI * 2 + time * 0.35;
-      const x = Math.cos(a) * r * 1.45;
-      const y = Math.sin(a) * r * 0.35;
+      const x = Math.cos(a) * r * 1.48;
+      const y = Math.sin(a) * r * 0.36;
       return {
         x: cx + x * Math.cos(-0.32) - y * Math.sin(-0.32),
         y: cy + x * Math.sin(-0.32) + y * Math.cos(-0.32),
         alpha: 0.96,
         color: 1,
-        size: 1.95,
+        size: 1.9,
       };
     }
     const t = (i - ring + 0.5) / Math.max(1, count - ring);
@@ -140,8 +140,8 @@ function shapeTarget(kind, i, count, time, box, pointer = { nx: 0, ny: 0 }) {
     const depth = y * Math.sin(tilt) + zz * Math.cos(tilt);
     const perspective = 1 / (1.9 - depth * 0.5);
     return {
-      x: cx + xx * r * perspective * 1.38,
-      y: cy + yy * r * perspective * 1.38,
+      x: cx + xx * r * perspective * 1.42,
+      y: cy + yy * r * perspective * 1.42,
       alpha: 0.34 + 0.66 * (depth * 0.5 + 0.5),
       size: 1.35 + depth * 0.85,
     };
@@ -151,7 +151,7 @@ function shapeTarget(kind, i, count, time, box, pointer = { nx: 0, ny: 0 }) {
     const strand = i % 3;
     const t = (i / count + time * 0.03) % 1;
     const a = t * Math.PI * 16 + time * 1.1 + (strand === 1 ? Math.PI : 0);
-    const radius = Math.min(box.w, box.h) * 0.19;
+    const radius = Math.min(box.w, box.h) * 0.2;
     if (strand === 2) {
       const row = Math.floor(t * 44) / 44;
       return {
@@ -201,7 +201,7 @@ function shapeTarget(kind, i, count, time, box, pointer = { nx: 0, ny: 0 }) {
       (Math.floor(i / 9) / Math.ceil(count / 9)) * Math.PI * 2 +
       0.4 * ring +
       0.05 * Math.sin(time * 0.3 + ring);
-    const radius = 28 + t * Math.max(box.w, box.h) * 0.48;
+    const radius = 28 + t * Math.max(box.w, box.h) * 0.5;
     return {
       x: cx + Math.cos(a) * radius,
       y: cy + box.h * 0.04 + Math.sin(a) * radius * (box.w < 700 ? 1 : 0.56),
@@ -239,7 +239,7 @@ function shapeTarget(kind, i, count, time, box, pointer = { nx: 0, ny: 0 }) {
 
 function drawProceduralHexLogo(c, cx, cy, radius) {
   c.save();
-  const colors = ['#2563eb', '#06b6d4', '#079982', '#4f46e5'];
+  const colors = ['#2563eb', '#06b6d4', '#079982', '#7c3aed'];
   for (let s = 0; s < 6; s++) {
     const a1 = (s * Math.PI) / 3 - Math.PI / 6;
     const a2 = ((s + 1) * Math.PI) / 3 - Math.PI / 6;
@@ -258,13 +258,11 @@ function drawProceduralHexLogo(c, cx, cy, radius) {
 export default function ParticleScene({
   paused = false,
   heroMode = 'combo',
-  onHeroModeChange,
 }) {
   const canvasRef = useRef(null);
   const stateRef = useRef({
     paused,
     heroMode,
-    hoverExpanded: false,
     reduced: false,
     frame: 0,
     time: 0,
@@ -298,7 +296,6 @@ export default function ParticleScene({
 
   useEffect(() => {
     stateRef.current.heroMode = heroMode;
-    stateRef.current.hoverExpanded = false;
   }, [heroMode]);
 
   useEffect(() => {
@@ -336,16 +333,18 @@ export default function ParticleScene({
       ].join(':');
       if (st.cache.has(key)) return st.cache.get(key);
 
-      const W = Math.max(60, Math.round(box.w));
-      const H = Math.max(60, Math.round(box.h));
+      const W = Math.max(80, Math.round(box.w));
+      const H = Math.max(80, Math.round(box.h));
       const mask = document.createElement('canvas');
       mask.width = W;
       mask.height = H;
       const c = mask.getContext('2d', { willReadFrequently: true });
+      c.imageSmoothingEnabled = true;
+      c.imageSmoothingQuality = 'high';
       c.clearRect(0, 0, W, H);
 
       if (kind === 'logo') {
-        const size = Math.min(W, H) * 0.86;
+        const size = Math.min(W, H) * 0.92;
         if (st.logoLoaded && st.logoImg) {
           const iw = st.logoImg.naturalWidth || 1310;
           const ih = st.logoImg.naturalHeight || 1200;
@@ -357,16 +356,16 @@ export default function ParticleScene({
           drawProceduralHexLogo(c, W / 2, H / 2, size * 0.45);
         }
       } else if (kind === 'combo') {
-        const logoBoxSize = Math.min(H * 0.82, W * 0.25);
-        const gap = Math.max(18, W * 0.03);
+        const logoBoxSize = Math.min(H * 0.88, W * 0.25);
+        const gap = Math.max(24, W * 0.032);
         c.font = '400 100px "Instrument Serif", Georgia, serif';
         const m = c.measureText(text);
         const mw = (m.actualBoundingBoxLeft || m.width / 2) + (m.actualBoundingBoxRight || m.width / 2);
         const ascent = (m.actualBoundingBoxAscent || 72) / 100;
         const descent = (m.actualBoundingBoxDescent || 18) / 100;
         const totalH = ascent + descent;
-        const availTextW = Math.max(120, W * 0.88 - logoBoxSize - gap);
-        const font = Math.min(availTextW / (mw / 100), (H * 0.82) / totalH);
+        const availTextW = Math.max(140, W * 0.92 - logoBoxSize - gap);
+        const font = Math.min(availTextW / (mw / 100), (H * 0.88) / totalH);
         c.font = `400 ${font}px "Instrument Serif", Georgia, serif`;
         const textW = (mw / 100) * font;
         const groupW = logoBoxSize + gap + textW;
@@ -380,7 +379,7 @@ export default function ParticleScene({
           const dh = ih * scale;
           c.drawImage(st.logoImg, startX + (logoBoxSize - dw) / 2, (H - dh) / 2, dw, dh);
         } else {
-          drawProceduralHexLogo(c, startX + logoBoxSize / 2, H / 2, logoBoxSize * 0.44);
+          drawProceduralHexLogo(c, startX + logoBoxSize / 2, H / 2, logoBoxSize * 0.45);
         }
 
         c.fillStyle = '#062c35';
@@ -391,8 +390,8 @@ export default function ParticleScene({
         c.fillText(text, textX, textY);
       } else if (kind === 'circle') {
         const chars = [...text];
-        const radius = Math.min(W, H) * 0.34;
-        const font = radius * 0.4;
+        const radius = Math.min(W, H) * 0.36;
+        const font = radius * 0.42;
         c.fillStyle = '#062c35';
         c.font = `400 ${font}px "Instrument Serif", Georgia, serif`;
         c.textAlign = 'center';
@@ -415,7 +414,7 @@ export default function ParticleScene({
         const ascent = (metrics[0].actualBoundingBoxAscent || 72) / 100;
         const descent = (metrics.at(-1).actualBoundingBoxDescent || 18) / 100;
         const total = ascent + 0.92 * (lines.length - 1) + descent;
-        const font = Math.min((W * 0.86) / (mw / 100), (H * 0.84) / total);
+        const font = Math.min((W * 0.9) / (mw / 100), (H * 0.88) / total);
         c.fillStyle = '#062c35';
         c.textAlign = 'center';
         c.textBaseline = 'alphabetic';
@@ -428,7 +427,7 @@ export default function ParticleScene({
       const pixels = c.getImageData(0, 0, W, H).data;
       const isOpaque = (px, py) => {
         if (px < 0 || py < 0 || px >= W || py >= H) return false;
-        return pixels[(py * W + px) * 4 + 3] > 145;
+        return pixels[(py * W + px) * 4 + 3] > 135;
       };
       const isCleanSolid = (px, py) => {
         if (!isOpaque(px, py)) return false;
@@ -440,14 +439,28 @@ export default function ParticleScene({
         return neighbors >= 2;
       };
 
-      let area = 0;
-      for (let y = 0; y < H; y += 2) {
-        for (let x = 0; x < W; x += 2) {
-          if (isCleanSolid(x, y)) area += 4;
+      // Binary search for exact SI.gov lattice grid spacing so every particle gets a distinct grid cell
+      const targetCount = st.particles.length;
+      let lo = 2.4,
+        hi = 18.0,
+        bestSpacing = 4.6;
+      for (let iter = 0; iter < 8; iter++) {
+        const mid = (lo + hi) * 0.5;
+        let cnt = 0;
+        for (let y = mid / 2; y < H; y += mid) {
+          const iy = Math.floor(y);
+          for (let x = mid / 2; x < W; x += mid) {
+            if (isCleanSolid(Math.floor(x), iy)) cnt++;
+          }
+        }
+        if (cnt >= targetCount) {
+          bestSpacing = mid;
+          lo = mid;
+        } else {
+          hi = mid;
         }
       }
-
-      const spacing = Math.max(1.05, Math.sqrt(Math.max(1, area) / (st.particles.length * 1.06)));
+      const spacing = Math.max(2.6, bestSpacing);
       const points = [];
       let minX = Infinity,
         minY = Infinity,
@@ -455,14 +468,15 @@ export default function ParticleScene({
         maxY = -Infinity;
 
       for (let y = spacing / 2; y < H; y += spacing) {
+        const iy = Math.floor(y);
         for (let x = spacing / 2; x < W; x += spacing) {
           const ix = Math.floor(x);
-          const iy = Math.floor(y);
           if (isCleanSolid(ix, iy)) {
             const idx = (iy * W + ix) * 4;
             const r = pixels[idx];
             const g = pixels[idx + 1];
             const b = pixels[idx + 2];
+            const a = pixels[idx + 3];
             const isColoredLogoPixel =
               (kind === 'logo' || kind === 'combo') &&
               (Math.abs(r - 6) > 18 || Math.abs(g - 44) > 18 || Math.abs(b - 53) > 18);
@@ -473,6 +487,7 @@ export default function ParticleScene({
               ny: (y / H) * 2 - 1,
               column: Math.floor(x / spacing),
               line: text.includes('|') && y > H / 2 ? 1 : 0,
+              edgeAlpha: clamp((a - 100) / 140, 0.65, 1),
               customColor: isColoredLogoPixel ? `rgb(${r},${g},${b})` : null,
             });
             minX = Math.min(minX, x);
@@ -492,6 +507,7 @@ export default function ParticleScene({
             ny: 0,
             column: i,
             line: 0,
+            edgeAlpha: 1,
             customColor: null,
           });
         }
@@ -508,14 +524,15 @@ export default function ParticleScene({
         [points[j], points[k]] = [points[k], points[j]];
       }
 
+      const dotRadius = clamp(spacing * 0.36, 1.45, 2.05);
       const result = Array.from({ length: st.particles.length }, (_, i) => {
         const p = points[i % points.length];
         return {
           ...p,
-          x: p.x + (i >= points.length ? (seeded(i + 9) - 0.5) * 1.4 : 0),
-          y: p.y + (i >= points.length ? (seeded(i + 19) - 0.5) * 1.4 : 0),
-          alpha: 1,
-          size: p.customColor ? 2.15 : 1.95,
+          x: p.x,
+          y: p.y,
+          alpha: p.edgeAlpha ?? 1,
+          size: p.customColor ? dotRadius * 1.08 : dotRadius,
         };
       });
       result.bounds = { x: box.x + minX, y: box.y + minY, w: Math.max(40, maxX - minX), h: Math.max(40, maxY - minY) };
@@ -527,14 +544,7 @@ export default function ParticleScene({
       if ((st.mode === 'text' || st.mode === 'combo' || st.mode === 'logo') && st.targets) {
         const p = st.targets[i % st.targets.length];
         if (!p) return { x: st.width / 2, y: st.height / 2, alpha: 0.5, size: 1.5 };
-        if (st.reduced || st.paused) return p;
-        const floatY = p.customColor ? Math.sin(st.time * 2.2 + (p.nx || 0) * 3.2) * 2.2 : 0;
-        const floatX = p.customColor ? Math.cos(st.time * 1.7 + (p.ny || 0) * 2.5) * 1.4 : 0;
-        return {
-          ...p,
-          x: p.x + floatX,
-          y: p.y + floatY,
-        };
+        return p;
       }
       if (st.mode === 'snake' && st.targets) {
         const p = st.targets[i % st.targets.length];
@@ -547,7 +557,7 @@ export default function ParticleScene({
         return {
           ...p,
           color: !st.reduced && progress - p.rank < 0.045 ? 1 : undefined,
-          size: !st.reduced && progress - p.rank < 0.045 ? 2.85 : 1.95,
+          size: !st.reduced && progress - p.rank < 0.045 ? 2.9 : p.size || 1.85,
         };
       }
       if (st.mode === 'circle' && st.targets) {
@@ -562,7 +572,7 @@ export default function ParticleScene({
           ...p,
           x: cx + x * Math.cos(angle) - y * Math.sin(angle),
           y: cy + x * Math.sin(angle) + y * Math.cos(angle),
-          size: 1.8,
+          size: 1.75,
         };
       }
       return shapeTarget(
@@ -603,37 +613,31 @@ export default function ParticleScene({
 
       if (scene === 'hero') {
         const copyEl = document.querySelector('.landing .si-hero-copy');
-        const heading = (copyEl ? copyEl.getBoundingClientRect().top : st.height * 0.56) + window.scrollY;
-        const availH = Math.max(140, heading - 122);
-
-        if (st.hoverExpanded && st.heroMode === 'combo') {
-          mode = 'logo';
-        } else if (st.hoverExpanded && st.heroMode === 'text') {
-          mode = st.width < 900 ? 'circle' : 'snake';
-        } else {
-          mode = st.heroMode || 'combo';
-        }
+        const heading = (copyEl ? copyEl.getBoundingClientRect().top : st.height * 0.6) + window.scrollY;
+        const availH = Math.max(180, heading - 98);
+        mode = st.heroMode || 'combo';
+        if (mode === 'snake' && st.width < 900) mode = 'circle';
 
         if (st.width >= 900) {
           const isLogoOnly = mode === 'logo';
           const w = isLogoOnly
-            ? Math.min(availH * 0.92, 320)
-            : Math.min(st.width * (mode === 'snake' ? 0.58 : 0.54), mode === 'snake' ? 860 : 780);
+            ? Math.min(availH * 1.05, 430)
+            : Math.min(st.width * (mode === 'text' ? 0.84 : 0.82), mode === 'text' ? 1440 : 1360);
           const h = isLogoOnly
-            ? Math.min(availH * 0.88, 285)
-            : Math.min(availH * 0.76, mode === 'snake' ? 255 : 225);
+            ? Math.min(availH * 0.94, 380)
+            : Math.min(availH * 0.92, mode === 'snake' ? 360 : 350);
           box = {
             x: (st.width - w) / 2,
-            y: 94 + Math.max(0, (availH - h) * 0.36),
+            y: 78 + Math.max(0, (availH - h) * 0.35),
             w,
             h,
           };
         } else {
-          const w = st.width * 0.82;
-          const h = Math.min(availH * 0.74, 185);
+          const w = st.width * 0.88;
+          const h = Math.min(availH * 0.82, 220);
           box = {
             x: (st.width - w) / 2,
-            y: 78 + Math.max(0, (availH - h) * 0.35),
+            y: 72 + Math.max(0, (availH - h) * 0.35),
             w,
             h,
           };
@@ -643,7 +647,7 @@ export default function ParticleScene({
         const b = stageEl?.getBoundingClientRect();
         box =
           st.width >= 900 && scene !== 'reja'
-            ? { x: st.width * 0.54, y: st.height * 0.18, w: st.width * 0.36, h: st.height * 0.6 }
+            ? { x: st.width * 0.54, y: st.height * 0.16, w: st.width * 0.38, h: st.height * 0.64 }
             : b && b.width > 20 && b.height > 20
               ? { x: b.left, y: b.top, w: b.width, h: b.height }
               : { x: st.width * 0.12, y: st.height * 0.16, w: st.width * 0.76, h: st.height * 0.44 };
@@ -660,9 +664,9 @@ export default function ParticleScene({
           : mode === 'logo'
             ? 'LOGO'
             : mode === 'snake'
-              ? 'Kichik Yuk|Aniq Manzil'
+              ? 'Ishonchli Yo‘l|Aniq Manzil'
               : mode === 'circle'
-                ? `${brandTitle} · KICHIK YUK · `
+                ? `${brandTitle} · ISHONCHLI YO‘L · `
                 : '';
 
       const signature = [
@@ -730,7 +734,7 @@ export default function ParticleScene({
         if (!t) continue;
         if (dt) advanceParticle(p, t, st.pointer, st.waves, dt);
         const speed = clamp(Math.hypot(p.vx, p.vy) / 7, 0, 1);
-        const size = (t.size || 1.8) * (st.width < 700 ? 1.25 : 1.55) + speed * 1.6;
+        const size = (t.size || 1.75) * (st.width < 700 ? 1.2 : 1.5) + speed * 1.6;
         ctx.globalAlpha = clamp(((t.alpha ?? 1) + speed * 0.4) * st.opacity, 0, 1);
 
         if (t.customColor) {
@@ -781,7 +785,7 @@ export default function ParticleScene({
       canvas.width = Math.round(st.width * dpr);
       canvas.height = Math.round(st.height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = st.width < 700 ? 2200 : 3400;
+      const count = st.width < 700 ? 1700 : 2500;
       if (st.particles.length !== count) {
         st.particles = Array.from({ length: count }, (_, i) => ({
           x: seeded(i + 7) * st.width,
@@ -806,28 +810,10 @@ export default function ParticleScene({
         nx: (e.clientX / st.width) * 2 - 1,
         ny: (e.clientY / st.height) * 2 - 1,
       };
-      if (st.scene !== 'hero' || document.querySelector('dialog[open]')) return;
-      const b = st.stageBounds;
-      const pad = st.hoverExpanded ? 55 : 24;
-      if (b && (st.heroMode === 'combo' || st.heroMode === 'text')) {
-        const inside =
-          e.clientX > b.x - pad &&
-          e.clientX < b.x + b.w + pad &&
-          e.clientY > b.y - pad &&
-          e.clientY < b.y + b.h + pad;
-        if (inside !== st.hoverExpanded) {
-          st.hoverExpanded = inside;
-          syncScene(true);
-        }
-      }
     }
 
     function onPointerLeave() {
       st.pointer.x = st.pointer.y = -10000;
-      if (st.hoverExpanded) {
-        st.hoverExpanded = false;
-        syncScene(true);
-      }
     }
 
     function onPointerDown(e) {
@@ -855,7 +841,6 @@ export default function ParticleScene({
     function onReduceChange(e) {
       st.reduced = e.matches;
       if (st.reduced) {
-        st.hoverExpanded = false;
         syncScene(true);
         snap();
       }

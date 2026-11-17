@@ -14,11 +14,14 @@ const SECTIONS = [
   { id: 'reja', label: 'Yo‘lga chiqish' },
 ];
 
-const HERO_MODES = [
-  { id: 'combo', num: '01', label: 'Logo + YO‘LCHI' },
-  { id: 'logo', num: '02', label: 'Bizning Logo' },
-  { id: 'text', num: '03', label: 'YO‘LCHI' },
-  { id: 'snake', num: '04', label: 'Shior' },
+const HERO_MODES = ['combo', 'logo', 'text', 'snake'];
+
+const CARD_IMAGES = [
+  '/brand/van-3d.png',
+  '/brand/hub-3d.png',
+  '/brand/van-3d.png',
+  '/brand/pack-3d.png',
+  '/brand/hub-3d.png',
 ];
 
 const ART_STYLES = ['literacy', 'lab', 'mentor', 'science', 'literacy'];
@@ -55,9 +58,9 @@ export default function Landing() {
   }, []);
 
   const cycleHeroMode = () => {
-    const idx = HERO_MODES.findIndex((m) => m.id === heroMode);
+    const idx = HERO_MODES.indexOf(heroMode);
     const next = HERO_MODES[(idx + 1) % HERO_MODES.length];
-    setHeroMode(next.id);
+    setHeroMode(next);
   };
 
   const filteredTrips =
@@ -65,11 +68,7 @@ export default function Landing() {
 
   return (
     <div className={`landing si-landing ${paused ? 'motion-paused' : ''}`}>
-      <ParticleScene
-        paused={paused}
-        heroMode={heroMode}
-        onHeroModeChange={setHeroMode}
-      />
+      <ParticleScene paused={paused} heroMode={heroMode} />
 
       <header className="si-header">
         <Logo landing />
@@ -110,7 +109,7 @@ export default function Landing() {
       </nav>
 
       <main id="main">
-        {/* 1. HERO — FULL VIEWPORT SI.GOV STYLE WITH LOGO + TEXT PARTICLES */}
+        {/* 1. HERO — FULL VIEWPORT SI.GOV STYLE (CLICK STAGE TO MORPH) */}
         <section
           className="si-hero si-section-dark"
           data-motion="combo"
@@ -121,30 +120,17 @@ export default function Landing() {
             <button
               type="button"
               className="si-art-toggle"
-              aria-label="Zarracha shaklini keyingi ko‘rinishga o‘tkazish"
+              aria-label="Zarracha shaklini almashtirish"
               onClick={cycleHeroMode}
             />
-            <div className="si-hero-mode-bar" role="group" aria-label="Zarracha shakli tanlovi">
-              {HERO_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-pressed={heroMode === m.id}
-                  onClick={() => setHeroMode(m.id)}
-                >
-                  <span>{m.num}</span>
-                  {m.label}
-                </button>
-              ))}
-            </div>
-            <div className="si-art-coordinate left">KICHIK YUK + ANIQ MANZIL</div>
+            <div className="si-art-coordinate left">ISHONCHLI YO‘L + ANIQ MANZIL</div>
             <div className="si-art-coordinate right">39.65° N / 66.96° E · BILET 006</div>
           </div>
 
           <div className="si-hero-copy">
             <div>
               <p className="si-eyebrow">
-                <span className="si-status-dot" /> ODDIY YUK. O‘YLANGAN YO‘L.
+                <span className="si-status-dot" /> TARTIBLI QATNOV. O‘YLANGAN YO‘L.
               </p>
               <h1 id="hero-title">
                 {BRAND.hero[0]}
@@ -172,7 +158,7 @@ export default function Landing() {
           </span>
         </section>
 
-        {/* 2. VISION — 3D SPHERE & ORBITAL RING */}
+        {/* 2. VISION — 3D SPHERE & STUDIO SHOWCASE */}
         <section
           className="si-vision si-section-dark"
           data-motion="ring"
@@ -184,7 +170,7 @@ export default function Landing() {
               <span className="si-status-dot" /> NEGA YO‘LCHI?
             </p>
             <h2 id="vision-title" className="si-statement">
-              Kichik yuklar ham —<br />
+              Har bir jo‘natma —<br />
               katta <em>e’tiborga loyiq.</em>
             </h2>
             <div className="si-vision-bottom">
@@ -193,12 +179,18 @@ export default function Landing() {
                 noaniq vaqtlar o‘rniga — tayyor qatnovlar ro‘yxati, aniq jo‘nash vaqti va bir
                 zumda shakllanadigan so‘rov tasdig‘i.
               </p>
-              <div className="si-vision-note">
-                <span>01 — BIZNING QARASH</span>
-                <p>
-                  Aniq yo‘nalish.<br />
-                  Xotirjam <em>jo‘natma.</em>
-                </p>
+              <div className="si-vision-showcase">
+                <figure className="si-studio-card">
+                  <img
+                    src="/brand/hub-3d.png"
+                    alt="Manzillar va jo‘natmalar bog‘lanishi"
+                    loading="lazy"
+                  />
+                  <figcaption>
+                    <strong>Viloyat markazi ↔ A, B, C tumanlari</strong>
+                    <span>5 ta tasdiqlangan yo‘nalish va aniq jo‘nash vaqti</span>
+                  </figcaption>
+                </figure>
               </div>
             </div>
             <div className="si-motion-stage si-vision-stage" aria-hidden="true" />
@@ -236,7 +228,7 @@ export default function Landing() {
                 <div className="si-step-copy">
                   <h3>Manzilingizni tanlang.</h3>
                   <p>
-                    Yukingiz qayerga yetib borishi kerak? «Barchasi», «A tumani», «B tumani» yoki
+                    Buyumingiz qayerga yetib borishi kerak? «Barchasi», «A tumani», «B tumani» yoki
                     «C tumani» filtrini tanlab, faqat o‘zingizga mos yo‘nalishlarni ajratib oling.
                   </p>
                   <Link to="/qatnovlar" className="si-step-link">
@@ -264,7 +256,7 @@ export default function Landing() {
               <article className="si-step" data-motion="logo">
                 <span className="si-step-number">03 / QADAM</span>
                 <div className="si-step-copy">
-                  <h3>Yuk haqida yozing.</h3>
+                  <h3>Ma’lumotni tasdiqlang.</h3>
                   <p>
                     Ismingiz va yukning qisqa tavsifini (masalan, «2 quti kitob») kiriting.
                     Tasdiq chiptasi shu zahoti yaratiladi — uni saqlab yoki chop etib oling.
@@ -279,29 +271,42 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* 4. SIGNAL — FULL-SCREEN RADAR BROADCAST WAVES */}
+        {/* 4. SIGNAL — FULL-SCREEN RADAR BROADCAST WAVES + 3D TRANSPORT VISUAL */}
         <section
           className="si-signal si-section-dark"
           data-motion="broadcast"
           id="signal"
           aria-labelledby="signal-title"
         >
-          <div className="si-section-inner">
-            <p className="si-eyebrow">
-              <span className="si-status-dot" /> HUDUDLARARO BOG‘LANISH
-            </p>
-            <h2 id="signal-title">
-              Bitta yo‘nalish.<br />
-              <em>Aniq vaqt va ishonch.</em>
-            </h2>
-            <p>
-              Viloyat markazi hamda A, B va C tumanlari o‘rtasidagi barcha qatnovlar yagona
-              tushunarli tizimda.
-            </p>
+          <div className="si-section-inner si-signal-grid">
+            <div>
+              <p className="si-eyebrow">
+                <span className="si-status-dot" /> HUDUDLARARO BOG‘LANISH
+              </p>
+              <h2 id="signal-title">
+                Bitta yo‘nalish.<br />
+                <em>Aniq vaqt va ishonch.</em>
+              </h2>
+              <p>
+                Viloyat markazi hamda A, B va C tumanlari o‘rtasidagi barcha qatnovlar yagona
+                tushunarli tizimda.
+              </p>
+            </div>
+            <figure className="si-signal-figure">
+              <img
+                src="/brand/van-3d.png"
+                alt="Hududlararo transport qatnovi"
+                loading="lazy"
+              />
+              <figcaption>
+                <span className="si-live-pill">● 20–21 NOYABR, 2026</span>
+                <strong>Kunlik tartibli qatnovlar jadvali</strong>
+              </figcaption>
+            </figure>
           </div>
         </section>
 
-        {/* 5. ROUTES & INITIATIVES — SI.GOV ARCHITECTURAL GRID */}
+        {/* 5. ROUTES & INITIATIVES — SI.GOV ARCHITECTURAL GRID WITH 3D ILLUSTRATIONS */}
         <section
           className="si-initiatives si-section-light"
           data-motion="scatter"
@@ -348,9 +353,12 @@ export default function Landing() {
             <div className="si-initiative-grid">
               {filteredTrips.map((trip, idx) => {
                 const artClass = ART_STYLES[idx % ART_STYLES.length];
+                const cardImg = CARD_IMAGES[idx % CARD_IMAGES.length];
                 return (
                   <article key={trip.id} className="si-initiative-card">
                     <div className={`si-card-art si-art-${artClass}`} aria-hidden="true">
+                      <img className="si-card-bg-img" src={cardImg} alt="" loading="lazy" />
+                      <div className="si-card-overlay" />
                       <span className="si-art-label">{trip.type.toUpperCase()}</span>
                       <div className="si-card-glyph">
                         <span className="si-glyph-id">{trip.id}</span>
@@ -368,8 +376,8 @@ export default function Landing() {
                         {trip.from} <span aria-hidden="true">→</span> {trip.to}
                       </h3>
                       <p>
-                        {trip.caption}. Yetib borish manzili — <strong>{trip.to}</strong>. Kichik
-                        yuk uchun so‘rovni bir daqiqada rasmiylashtiring.
+                        {trip.caption}. Yetib borish manzili — <strong>{trip.to}</strong>. So‘rovni
+                        bir daqiqada rasmiylashtiring va tasdiq chiptasini oling.
                       </p>
                       <div className="si-card-actions">
                         <Link to={`/sorov/${trip.id}`} className="si-card-open">
@@ -407,7 +415,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* 6. PACKING GUIDE & FAQ */}
+        {/* 6. PACKING GUIDE & FAQ WITH 3D PACKAGING ILLUSTRATION */}
         <section
           className="si-faq-wrap si-section-cream"
           data-motion="sphere"
@@ -418,16 +426,24 @@ export default function Landing() {
             <div className="si-packing-hero">
               <div className="si-packing-copy">
                 <p className="si-eyebrow">
-                  <span className="si-status-dot" /> YUKINGIZGA G‘AMXO‘RLIK
+                  <span className="si-status-dot" /> JO‘NATMAGA G‘AMXO‘RLIK
                 </p>
                 <h2>
                   Yo‘lga chiqishdan oldingi<br />
                   <em>to‘rtta oltin qoida.</em>
                 </h2>
                 <p>
-                  Mustahkam quti, aniq tavsif va tekshirilgan jo‘nash vaqti — yukingiz manzilga
+                  Mustahkam quti, aniq tavsif va tekshirilgan jo‘nash vaqti — buyumingiz manzilga
                   bus-butun yetib borishining asosi.
                 </p>
+                <figure className="si-pack-figure">
+                  <img
+                    src="/brand/pack-3d.png"
+                    alt="Mustahkam qadoqlangan quti va kitoblar"
+                    loading="lazy"
+                  />
+                  <figcaption>✓ Mustahkam qadoq — xotirjam yo‘l</figcaption>
+                </figure>
                 <Link to="/qollanma" className="si-button navy">
                   To‘liq yuk qo‘llanmasi <span aria-hidden="true">↗</span>
                 </Link>
@@ -541,7 +557,7 @@ export default function Landing() {
         <div className="si-footer-top">
           <Logo landing />
           <p>
-            Kichik yuk. Aniq vaqt.<br />
+            Aniq vaqt. Yaqin manzillar.<br />
             <em>Ishonchli yo‘nalish.</em>
           </p>
           <div className="si-footer-links">
@@ -573,7 +589,7 @@ export default function Landing() {
           </defs>
           <text>
             <textPath href="#si-circle-text">
-              YO‘LCHI · KICHIK YUK · ANIQ MANZIL ·
+              YO‘LCHI · ISHONCHLI YO‘L · ANIQ MANZIL ·
             </textPath>
           </text>
         </svg>
