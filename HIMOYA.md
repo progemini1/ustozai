@@ -47,10 +47,19 @@ Qo‘shimcha tekshiruv: A tumani → Y01/Y05; C tumani → Y04. Qidiruvda `Y02` 
 
 Bu bilet uchun sinov saytidir. Tugmalar o‘z vazifasini bajaradi, so‘rov tekshiriladi va tasdiq yaratiladi. Haqiqiy bron, haydovchiga xabar, to‘lov, GPS, narx yoki yuk sig‘imini tekshirish amalga oshirilmaydi va bunday natija va’da qilinmaydi. Biletda bu integratsiyalar talab qilinmagan.
 
-So‘rovlar shu qurilma va brauzerning mahalliy xotirasida. Supabase va Google OAuth infratuzilmasi tayyorlangan bo‘lishi bu versiyaga ulanish amalga oshirilganini anglatmaydi. Brauzer xotirasi bloklansa saqlangan deb ko‘rsatilmaydi; tasdiq faylini olish tavsiya qilinadi.
+Mehmon so‘rovlari brauzerda saqlanadi. Google orqali kirgan foydalanuvchining so‘rovlari Supabase’da egasiga tegishli RLS bilan saqlanadi; haqiqiy yozish muvaffaqiyatsiz bo‘lsa ogohlantirish chiqadi. Google callback, bulutdan reload va boshqa hisobning yozuviga kirish rad etilishini jonli ko‘rsating. Telegramga yuborish faqat tugma bosilganda, JWT va bazadagi ega tekshirilgach bajariladi; bu haydovchiga bron xabari emas.
 
 Tarix limiti 100 ta. Limitga yetilganda eski so‘rovlar jim o‘chirilmaydi; yangi tasdiq faqat joriy oynada qoladi va faylga yuklash kerakligi tushuntiriladi. JSON tiklash mavjud yozuvlarni asraydi, bir xil ID ni takrorlamaydi va limitdan oshsa o‘zgartirish kiritmaydi.
 
 ## Texnik savolga javob
 
 React va Vite; Bloom asosidagi Material Web komponentlari; Material Color Utilities bilan dinamik ranglar; Motion animatsiyalari. Server Node.js standart HTTP modulida, `/health` tekshiruvi va SPA deep link qo‘llovi bilan. Testlar bilet ma’lumotlarini, filtr va tekshirishni, saqlashdagi xatolarni hamda production HTTP javoblarini tekshiradi.
+
+## Qo‘shimcha funksiyalarni ko‘rsatish
+
+1. Yuqori o‘ngdagi Google orqali kirish → haqiqiy Google → `/hisob`; chiqish va qayta kirish.
+2. So‘rovni tayyorlab hisobga saqlash, sahifani yangilash va tarixdan qayta ochish.
+3. AI: “B tumaniga qatnovlarni top”. `search_trips` vositasi haqiqiy jadvaldan Y02/Y03 ni qaytaradi. “Y02 uchun Sinovchi 01, 2 quti kitob qoralamasini tayyorla” → tekshirilgan qoralama, shaklga joylash yoki tasdiq yaratish.
+4. Telegramga yuborish → haqiqiy natijadan keyingina “Yetkazildi”. Xatoda qayta urinish mumkin.
+
+`npm run check` domen, AI/agent, Telegram, Supabase va production HTTP testlarini birga bajaradi. Mock testlar jonli OAuth va RLS sinovini almashtirmaydi.

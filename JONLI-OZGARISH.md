@@ -60,3 +60,11 @@ Landing tahriri `src/Landing.jsx`, `src/Landing.css`, `src/ParticleScene.jsx` da
 4. `npm test`, so‘ng `npm run build` ni bajaring. Joylashdan oldin `node --test server.test.js` ni ham ishlating.
 
 Sahifalarga `.env` yoki server kalitlarini qo‘shmang. Ushbu versiyaning asosiy oqimi kalitsiz ishlaydi.
+
+## Google, baza va agent
+
+Hisob interfeysi: `src/AuthPage.jsx`, `AuthPage.css`. Sessiya va Supabase yozish/o‘qish: `src/AuthContext.jsx`. DB jadvali va RLS: `supabase/migrations/202611170001_requests.sql`; haqiqiy bazaga migratsiya SQL Editor orqali qo‘llanadi.
+
+AI oynasi: `src/AiAssistant.jsx`, `AiAssistant.css`; server vositalari `server/agent.mjs`, kalitlar almashinuvi `server/ai.mjs`. Telegram: `src/TelegramReceipt.jsx`, `server/telegram.mjs`. Kalitlarni faqat `.env` yoki Render Environment’da o‘zgartiring; keyin backend/deploy qayta ishga tushadi. `.env.example` da faqat nomlar bor.
+
+Dashboard rasmlari `public/images/dashboard-*.webp`; ulanishi `src/DashboardMedia.css` va `src/main.jsx` da. Antigravity tayyorlagan landing va `public/brand/*-3d.png` alohida saqlangan.
